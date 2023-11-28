@@ -9,6 +9,6 @@ The list of directories and their purpose in this repository:
 
 ## Relevant Citations
 
+D. Bhaskar, D. Lee, H. Knútsdóttir, C. Tan, M. Zhang, P. Dean, C. Roskelley, and L. Keshet. "A Methodology for Morphological Feature Extraction and Unsupervised Cell Classification." [bioarXiv](https://www.biorxiv.org/content/10.1101/623793v1.abstract).
 
-
-E.T. Winn-Nuñez, H. Witt, D. Bhaskar, R. Huang, I.Y. Wong, J. Reichner, and L. Crawford. A probabilistic method for sampling alpha-shapes.
+E.T. Winn-Nuñez, H. Witt, D. Bhaskar, R. Huang, I.Y. Wong, J. Reichner, and L. Crawford. "A probabilistic method for sampling alpha-shapes."
