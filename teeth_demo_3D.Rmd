@@ -1,0 +1,115 @@
+---
+title: "teeth_demo_3D"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{teeth_demo_3D}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ashapesampler)
+library(Rvcg)
+library(rgl)
+library(doParallel)
+library(parallel)
+cores <- min(2L, detectCores())
+registerDoParallel(cores=cores)
+options(rgl.useNULL = TRUE)
+```
+
+This document shows how to use the $\alpha$-shape sampler to input primate manibular molars and generate new teeth. Data is linked in the README file. We strongly recommend running this code on a high performance computer. For simplicity, we will focus on the *Microcebus* molars, but all steps can be followed the same way for the *Tarsius* molars.
+
+This code requires packages `rgl`, `Rcvg`, `parallel`, and `doParallel` in addition to `ashapesampler`.
+
+To start, we input the data. These data are part of the package, but for demonstration purposes, below is the code that one would run to input a series of off files.  Variable `directory` should be changed based on the location of the desired data.
+
+```{r, eval=FALSE}
+input_dir <- "path/to/my_data" #replace with your directory here
+
+file_names=list.files(path=input_dir, full.names=TRUE)
+file_names=file_names[stringr::str_detect(file_names, 'off')] 
+                                        #make sure only off files
+N = length(file_names)
+data_list = list()
+
+for (k in 1:N){
+  data_list[[k]] <- readOFF(file_names[[k]])
+}
+```
+
+To load the teeth data used in the paper, use the above code on the downloaded files from INSERT LINK HERE for the off files of all teeth. In the `ashapesampler` package, we include two real *Microcebus* teeth for demonstrative purposes only.
+
+Next, we need the $\tau$ vector for all teeth. We do this in a loop after we upload each tooth and store it in a list. 
+
+```{r}
+data(teeth_demo) 
+m_list = teeth_demo[[1]]
+N = 2       
+tau_vec = vector("numeric", N)
+
+for (k in 1:N){
+  tau_vec[k] <- tau_bound(m_list[[k]]$Vertices, m_list[[k]]$cmplx)
+}
+print(tau_vec)
+```
+
+One indication that there may be an outlier shape is if the $\tau$ value of one shape is several standard deviations from the mean of the rest of the data. For example, in the set of *Microcebus* teeth, the $\tau$ values are all around 0.02. If a tooth in this data set had a $\tau$ value of 1, this may indicate that there will be issues using that particular tooth for shape generation via the $\alpha$-shape sampler.
+
+Next, we want to randomly select a $J$ teeth. Since the teeth here are fixed, this code block below shows how to sample a pair without replacement from $N$ objects.
+```{r, eval=FALSE}
+J = 2
+pair = sample(N,J)
+```
+
+To prevent repeating pairs from the same set, one can run `pairs = combn(N,J); which_sample = sample(dim(pairs)[2], 1)` to get unique combinations (replace 1 with however many new shapes are being generated).
+
+Finally, we run the pipeline to generated the new tooth. Note that we set `k_min=0`, as these are meshes and therefore have 0 volume in space, thereby causing a massive rejection rate if `k_min` is set any higher, as the probability of acceptance goes to 0. We save teeth as we go along. If generating multiple teeth, run this in a for loop.
+
+```{r}
+pair = c(1,2)
+point_cloud <- rbind(m_list[[pair[1]]]$Vertices, m_list[[pair[2]]]$Vertices)
+tau = min(tau_vec[pair[1]], tau_vec[pair[2]])
+new_tooth_m <- generate_ashape3d(point_cloud=point_cloud, J=2, tau=tau, 
+                                 k_min=0, cores=cores)
+print(pair)
+```
+
+To save the new tooth as a ply file for use in the `auto3dgm` paradigm, one runs the code directly below. If one is generating multiple teeth, we recommend including this in the for loop with the teeth generation and save teeth as you go in the same folder.
+
+```{r, eval=FALSE}
+new_tooth_m <- as.mesh3d(new_tooth_m)
+new_file <- "new_teeth_ply/new_tooth1.ply"   #Change this variable to your file.
+open3d()
+shade3d(new_tooth_m)
+writePLY(new_file)
+close3d()
+```
+
+Finally, we can plot the new tooth. For ease of comparison to the original teeth, we will convert the tooth to a `mesh3d` object first.
+
+```{r}
+new_tooth_m <- as.mesh3d(new_tooth_m)
+plot3d(new_tooth_m, col="gray", xlab="", ylab="", zlab="", axes= FALSE)
+rglwidget()
+```
+
+We can compare this tooth to the two teeth from which it was generated.
+
+```{r}
+m_mesh = teeth_demo[[2]]  
+plot3d(m_mesh[[pair[1]]], col="lightblue", xlab="", ylab="", zlab="", axes=FALSE)
+rglwidget()
+```
+
+```{r}
+plot3d(m_mesh[[pair[2]]], col="lightblue", xlab="", ylab="", zlab="", axes=FALSE)
+rglwidget()
+```
