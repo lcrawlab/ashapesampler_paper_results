@@ -1,0 +1,289 @@
+---
+title: "binary_mask_to_complex"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{binary_mask_to_complex}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width=6,
+  fig.height=6
+)
+```
+
+```{r setup}
+library(ashapesampler)
+library(SparseM)
+library(pliman)
+library(ggplot2)
+```
+
+To convert back into binary masks in R code, note that one needs the `EBImage` library, which can be complex in compilation. We have the code to run listed below, but for the sake of smooth compilation, we do not evaluate it in this notebook. If you want to run it in R, run the following code to install the necessary package:
+
+```{r, eval=FALSE}
+install.packages('BiocManager')
+BiocManager::install('EBImage')
+library(EBImage)
+```
+
+In this document, we demonstrate how to take a binary mask and convert it to a simplicial complex for input for the $\alpha$-shape sampler. We will then demonstrate how to reverse the process with a simplicial complex transforming to a binary mask. Additional packages needed for this notebook are `SparseM`, `pliman`, and `ggplot2`.
+
+A binary mask is a matrix-like object where entries of a matrix correspond to pixels of an image. Usually, a pixel is in the region of interest if the matrix entry is equal to 1, and is 0 otherwise. (Note that sometimes depending on the program this may be reversed - check your data and the program you are using for analysis. To use 0 to represent the region of interest, replace all 0's in this file with 1's and 1's with 0's.) The `raster` package can load in a binary mask in the form of a TIF file and store it as a raster object, which we can then convert to a matrix. One can also rasterize an image into a black and white binary mask and go from there. For this exercise, we will have a very basic binary mask created within the document.
+
+## Obtaining complex from binary mask
+
+First, we set up a small binary mask and plot the corresponding image. Note the simplicial complex here will look noticeably different in shape than the binary mask, but that is okay because the more detailed the binary mask, the closer the simplicial complex in appearance, and when we convert the complex back, we should get the same binary mask.
+
+```{r}
+my_mask <- matrix(0, nrow=20, ncol=30)
+my_pix <- rbind(c(2,3), c(3,3), c(3,4), c(3,5), c(3,6), c(3,7), c(3,8), c(4,2), c(4,3), c(4,4), c(4,5), c(4,6), c(4,7), c(4,8), 
+                c(5,3), c(5,4), c(6,3), c(6,4), c(6,3), c(7,4), c(8,3), c(8,4), c(8,5), c(8,6), c(8,7), c(8,8), c(9,2), c(9,3),
+                c(9,4), c(9,5), c(9,6), c(9,7), c(9,8), c(9,9), c(10,2), c(10,3), c(10,4), c(11,3))
+my_mask[my_pix] = 1
+image(as.matrix.csr(my_mask))
+```
+
+First we want to crop the mask such that the region of interest is centered for the pipeline and to square it to simplify our data processing computations. We highly recommend cropping the binary mask to square it.
+
+```{r}
+dim_square = 20
+indices <- which(my_mask == 1, arr.ind = TRUE)
+
+# Get the center indices
+center_row <- median(indices[, 1])
+center_col <- median(indices[, 2])
+
+# Create the 1662 by 1662 matrix with all 0's
+new_matrix <- matrix(0, nrow = dim_square, ncol = dim_square)
+
+# Get the row and column shifts needed to center the shape
+row_shift <- floor(nrow(new_matrix) / 2) - center_row
+col_shift <- floor(ncol(new_matrix) / 2) - center_col
+
+# Shift the indices to center the shape in the new matrix
+indices[, 1] <- indices[, 1] + row_shift
+indices[, 2] <- indices[, 2] + col_shift
+
+# Replace the relevant values in the new matrix with the shape
+new_matrix[indices] <- 1
+
+image(as.matrix.csr(new_matrix))
+```
+
+The pixels themselves will represent the vertices of the complex. To add some noise and randomness to the input shapes, we allow for the points to be plotted anywhere within the pixel as projected onto a $[0,1] \times \[0,1\]$ square. We store these vertex locations in a data frame containing the vertex label (labeled numerically if none given), the original matrix row, original matrix column, the x coordinate, and y coordinate.  
+
+```{r}
+# Adds some randomness to pixel points so that not just straight grid on xy plane (helper function)
+jitter_pixel <- function(x,y, dim_square){
+  pt_center = c((y-1)/dim_square+1/(2*dim_square), (dim_square-x)/dim_square+1/(2*dim_square))
+  jitter = runif(2, min=-1/(2*dim_square), max=1/(2*dim_square))
+  return(pt_center+jitter)
+}
+
+# Finds all possible vertices of the matrix (all black tiles)
+find_image_vert <- function(new_matrix, dim_square){
+  # create table with corresponding row/col# and xy coordinates
+  my_vertex_df <- data.frame(matrix(ncol=5, nrow=0))
+  colnames(my_vertex_df) <- c("label", "mrow", "mcol", "x", "y")
+  count=1
+  for(x in 1:dim_square){
+    for(y in 1:dim_square){
+      if(new_matrix[x,y]==1){ # black tile is represented by 1
+        my_vertex_df[count,] <- c(count, x, y, jitter_pixel(x,y, dim_square))
+        count=count+1
+      }
+    }
+  }
+  return(my_vertex_df)
+}
+
+my_vert <- find_image_vert(new_matrix=new_matrix, dim_square=dim_square)
+head(my_vert)
+```
+
+Next, we need to find the edges. We do this in a systemic order such that no edges overlap each other. To make an edge, we use the following step by step logic for each pixel:
+* Check the right, down, and diagonally down pixels relative to the current pixel. Any which have a point will have an edge with the current pixel.
+* Check if there is no point in the pixel above and there is a point in the pixel upward diagonal right. If both conditions are true, current pixel shares an edge with the upward diagonal right point.
+* Check if there is no point in pixel below, and there is a point in the pixel downward diagonal left. If both conditions are true, current pixel shares a edge with the downard diagonal left point. 
+
+```{r}
+# Finds all possible edges of matrix
+# Conditions to make edges:
+# 1. Check the right, down, and diag right down.
+# 2. check if 0 above, 1 diag up right, 1 right. If true, edge with diag up right.
+# 3. Check if 0 below, 1 diag down left, 1 diag down left. If true, edge with diag down left.
+find_image_edge <- function(image_vert) {
+  # image_vert is the data frame returned from function above
+  n = nrow(image_vert)
+  edge_list = data.frame(matrix(ncol = 2, nrow = 0))
+  for (i in 2:n) {
+    my_row = image_vert[i, 2]
+    my_col = image_vert[i, 3]
+    my_x = image_vert[i, 4]
+    my_y = image_vert[i, 5]
+    focus = image_vert[1:(i-1), ]
+    
+    # Find edges to the right/left, up/down, and upper right/downward left diagonals
+    edges_row = focus[which(focus$mrow == my_row & focus$mcol %in% c(my_col-1, my_col+1)),]
+    edges_col = focus[which(focus$mcol == my_col & focus$mrow %in% c(my_row-1, my_row+1)),]
+    edges_diag1 = focus[which(focus$mcol == my_col+1 & focus$mrow %in% c(my_row-1, my_row+1)),]
+    edges_diag2 = focus[which(focus$mcol == my_col-1 & focus$mrow %in% c(my_row+1)),]
+    edges_diag3 = NULL
+    
+    # includes upper left/downward right diagonals if upper right/downward left diagonals don't exist
+    if ((nrow(focus[which(focus$mcol == my_col & focus$mrow %in% c(my_row-1)),]) == 0 ||
+        nrow(focus[which(focus$mrow == my_row & focus$mcol %in% c(my_col-1)),]) == 0) &&
+        nrow(focus[which(focus$mrow == my_row-1 & focus$mcol %in% c(my_col-1)),]) != 0){
+      edges_diag3 = focus[which(focus$mcol == my_col-1 & focus$mrow %in% c(my_row-1)),]
+    }
+    
+    edges = rbind(edges_row, edges_col, edges_diag1, edges_diag2, edges_diag3)
+    if (nrow(edges) > 0) {
+      temp = cbind(i, edges[,1])
+      for(m in 1:dim(temp)[1]){
+        temp[m,] = sort(temp[m,])
+      }
+      edge_list = rbind(edge_list, temp)
+    }
+  }
+  colnames(edge_list) = c("ed1", "ed2")
+  return(edge_list)
+}
+
+my_edge = find_image_edge(my_vert)
+head(my_edge)
+```
+
+Finally, we find the faces. A face is formed where three vertices share all possible pairwise edges - in other words, where three edges form a triangle, we add a face.
+
+```{r}
+# Finds all possible faces of matrix
+find_image_face <- function(edge_list) {
+  # edge_list is the list returned from function above
+  n = max(edge_list)
+  face_list = data.frame(matrix(ncol = 3, nrow = 0))
+  for (i in 1:n) {
+    edges = edge_list[edge_list[,1] == i, 2]
+    edges = sort(edges)
+    n_edges = length(edges)
+    if (n_edges >= 2) {
+      for (j in 1:(n_edges-1)) {
+        for (k in (j+1):n_edges) {
+          if (length(which(edge_list$ed1==edges[j] & edge_list$ed2==edges[k]))==1){
+            face_list = rbind(face_list, sort(cbind(i, edges[j], edges[k])))
+          }
+        }
+      }
+    }
+  }
+  colnames(face_list) = c("f1", "f2", "f3")
+  return(face_list)
+}
+
+my_face = find_image_face(my_edge)
+head(my_face)
+```
+
+We take all of this information and put it together as one simplicial complex object, and plot the result:
+
+```{r}
+n=dim(my_vert)[1]
+my_complex = append(as.list(1:n), split(as.matrix(my_edge), seq(nrow(my_edge))))
+my_complex = append(my_complex, split(as.matrix(my_face), seq(nrow(my_face))))
+total_complex <- list("Vertices"=my_vert[,4:5], "cmplx"=my_complex)
+
+plot_2D_complex <- function(points, complex, color1="gray", color2="black"){
+  edges=extract_complex_edges(complex)
+  tri_keep =extract_complex_faces(complex)
+  edge_face <- matrix(nrow=0, ncol=2)
+  for(j in 1:dim(tri_keep)[1]){
+    face_v = sort(as.matrix(tri_keep[j,]))
+    edge_face = rbind(edge_face, c(face_v[1], face_v[2]),
+                      c(face_v[2], face_v[3]),
+                      c(face_v[1], face_v[3]))
+  }
+  edge_face = data.frame(edge_face)
+  colnames(edge_face)=c("ed1", "ed2")
+  int_edge = edge_face[which(duplicated(edge_face)),]
+  int_edge = unique(int_edge)
+  bd_edge = setdiff(edges, int_edge)
+  edges = data.frame(cbind("ed1"= bd_edge$ed1, "ed2"=bd_edge$ed2, "x1" = points[bd_edge$ed1,1], "y1"=points[bd_edge$ed1,2],
+                           "x2" = points[bd_edge$ed2,1], "y2"=points[bd_edge$ed2,2]))
+  dim_tri = dim(tri_keep)[1]
+  tri_keep = as.vector(t(tri_keep))
+  triangles = data.frame("id"=sort(rep(1:dim_tri, 3)), "x"=points[tri_keep, 1], "y"=points[tri_keep,2])
+  the_plot <- ggplot(data.frame(points), aes(x=x, y=y)) +
+    geom_polygon(data=triangles, aes(x=x, y=y, group=id), fill=color1) +
+    geom_segment(data=edges, aes(x=x1, y=y1, xend=x2, yend=y2), color=color2, linewidth=1)+
+    #theme_classic()+
+    theme_void()+
+    theme(panel.background = element_rect(fill="white"))+
+    xlab("")+
+    ylab("")+
+    xlim(c(0,1))+
+    ylim(c(0,1))+
+    theme(axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(), axis.line=element_blank())
+  return(the_plot)
+}
+
+plot_2D_complex(total_complex$Vertices, total_complex$cmplx)
+```
+
+## Obtaining binary mask from the complex
+
+To reverse, we plot the simplicial complex with black faces and black edges. We save the image as a png specifying the dimensions in pixels.
+
+```{r}
+bw_plot = plot_2D_complex(total_complex$Vertices, total_complex$cmplx, color1="black", color2="black")
+directory = getwd()  #Replace with your own string if you would like to specify the directory
+my_file = paste0(directory, "/test_bin.png")
+ggsave(file=my_file, plot=bw_plot, width=1, height=1, units="in", dpi = dim_square)
+bw_plot
+```
+
+We then load this png image using the `image_import` function from the `EBImage` library and the `image_to_mat` function from the `pliman` library and manually convert it to a binary mask. We correct for the black border that ensures centering of the image when we saved it. As stated above, we do not evaluate the code here. However, the converted binary mask is displayed below.
+
+```{r, eval=FALSE}
+# load the png
+img <- image_import(my_file)
+# Convert to binmap
+img_bin <- image_to_mat(img)
+img_binR <- t(matrix(img_bin$B1, nrow=20,ncol=20))
+my_ind = which(img_binR[2:(dim_square-1), 2:(dim_square-1)] < 0.7, arr.ind=TRUE)
+img_bin = matrix(0, nrow=dim_square, ncol=dim_square)
+img_bin[my_ind] = 1
+image(as.matrix.csr(img_bin))
+```
+![New Binary Mask](converted_binary_mask.png)
+
+While not a perfect rendition, the major characteristics are preserved and most importantly, the shape bears resemblence to the simplicial complex. Note that for the neutrophils, we used a threshold of 1 instead of 0.7; the change in threshold has to do with the detailed pixelation and may require trial and error on the part of the user. Additionally, if the centroid or center of the shape matters, then one should use the following python code to convert their complex back to a binary mask, as we did for the neutrophils (lines 277-284 remove any potential border that is accidentally placed during the conversion process):
+
+```{python, python.reticulate=FALSE, eval=FALSE}
+import numpy as np
+import pandas as pd
+import cv2
+
+my_img = cv2.imread(my_file, 0)
+my_img_invert = cv2.bitwise_not(my_img)
+my_img_invert = np.ceil(my_img_invert/255.0)
+my_img_invert[:,0]=0
+my_img_invert[:,1]=0
+my_img_invert[:,-1]=0
+my_img_invert[:, -2]=0
+my_img_invert[0,:]=0
+my_img_invert[1,:]=0
+my_img_invert[-1,:] = 0
+my_img_invert[-2,:]=0
+bin_path = 'test_bin.csv'
+img_df = pd.DataFrame(my_img_invert)
+img_df.to_csv(bin_path, sep=",", header=False, index=False)
+```
+Generally speaking, the more detailed the pixelation (e.g., the larger `dim_square`), then the higher the threshold for accepting a pixel in the binary mask. The basic tutorial shows the general process for going back and forth. Performance improves with more detailed binary masks.
