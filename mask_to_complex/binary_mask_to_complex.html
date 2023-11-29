@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>binary_mask_to_complex</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">binary_mask_to_complex</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(ashapesampler)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(SparseM)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;SparseM&#39;</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; The following object is masked from &#39;package:base&#39;:</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt;     backsolve</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="fu">library</span>(pliman)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt; Warning: package &#39;pliman&#39; was built under R version 4.2.3</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#&gt; The legacy packages maptools, rgdal, and rgeos, underpinning the sp package,</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt; which was just loaded, will retire in October 2023.</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; Please refer to R-spatial evolution reports for details, especially</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt; https://r-spatial.org/r/2023/05/15/evolution4.html.</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt; It may be desirable to make the sf package available;</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt; package maintainers should consider adding sf to Suggests:.</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; The sp package is now running under evolution status 2</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co">#&gt;      (status 2 uses the sf package in place of rgdal)</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="co">#&gt; |==========================================================|</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co">#&gt; | Tools for Plant Image Analysis (pliman 2.0.0)            |</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co">#&gt; | Author: Tiago Olivoto                                    |</span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="co">#&gt; | Type &#39;citation(&#39;pliman&#39;)&#39; to know how to cite pliman     |</span></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a><span class="co">#&gt; | Type &#39;vignette(&#39;pliman_start&#39;)&#39; for a short tutorial     |</span></span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a><span class="co">#&gt; | Visit &#39;http://bit.ly/pkg_pliman&#39; for a complete tutorial |</span></span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a><span class="co">#&gt; |==========================================================|</span></span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a><span class="co">#&gt; Warning: package &#39;ggplot2&#39; was built under R version 4.2.3</span></span></code></pre></div>
+<p>To convert back into binary masks in R code, note that one needs the
+<code>EBImage</code> library, which can be complex in compilation. We
+have the code to run listed below, but for the sake of smooth
+compilation, we do not evaluate it in this notebook. If you want to run
+it in R, run the following code to install the necessary package:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&#39;BiocManager&#39;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">&#39;EBImage&#39;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">library</span>(EBImage)</span></code></pre></div>
+<p>In this document, we demonstrate how to take a binary mask and
+convert it to a simplicial complex for input for the <span class="math inline">\(\alpha\)</span>-shape sampler. We will then
+demonstrate how to reverse the process with a simplicial complex
+transforming to a binary mask. Additional packages needed for this
+notebook are <code>SparseM</code>, <code>pliman</code>, and
+<code>ggplot2</code>.</p>
+<p>A binary mask is a matrix-like object where entries of a matrix
+correspond to pixels of an image. Usually, a pixel is in the region of
+interest if the matrix entry is equal to 1, and is 0 otherwise. (Note
+that sometimes depending on the program this may be reversed - check
+your data and the program you are using for analysis. To use 0 to
+represent the region of interest, replace all 0’s in this file with 1’s
+and 1’s with 0’s.) The <code>raster</code> package can load in a binary
+mask in the form of a TIF file and store it as a raster object, which we
+can then convert to a matrix. One can also rasterize an image into a
+black and white binary mask and go from there. For this exercise, we
+will have a very basic binary mask created within the document.</p>
+<div id="obtaining-complex-from-binary-mask" class="section level2">
+<h2>Obtaining complex from binary mask</h2>
+<p>First, we set up a small binary mask and plot the corresponding
+image. Note the simplicial complex here will look noticeably different
+in shape than the binary mask, but that is okay because the more
+detailed the binary mask, the closer the simplicial complex in
+appearance, and when we convert the complex back, we should get the same
+binary mask.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>my_mask <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow=</span><span class="dv">20</span>, <span class="at">ncol=</span><span class="dv">30</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>my_pix <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">5</span>), <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">6</span>), <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">7</span>), <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">2</span>), <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">5</span>), <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">6</span>), <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">7</span>), <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">8</span>), </span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>                <span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">7</span>,<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">8</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">8</span>,<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">8</span>,<span class="dv">5</span>), <span class="fu">c</span>(<span class="dv">8</span>,<span class="dv">6</span>), <span class="fu">c</span>(<span class="dv">8</span>,<span class="dv">7</span>), <span class="fu">c</span>(<span class="dv">8</span>,<span class="dv">8</span>), <span class="fu">c</span>(<span class="dv">9</span>,<span class="dv">2</span>), <span class="fu">c</span>(<span class="dv">9</span>,<span class="dv">3</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>                <span class="fu">c</span>(<span class="dv">9</span>,<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">9</span>,<span class="dv">5</span>), <span class="fu">c</span>(<span class="dv">9</span>,<span class="dv">6</span>), <span class="fu">c</span>(<span class="dv">9</span>,<span class="dv">7</span>), <span class="fu">c</span>(<span class="dv">9</span>,<span class="dv">8</span>), <span class="fu">c</span>(<span class="dv">9</span>,<span class="dv">9</span>), <span class="fu">c</span>(<span class="dv">10</span>,<span class="dv">2</span>), <span class="fu">c</span>(<span class="dv">10</span>,<span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">10</span>,<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">11</span>,<span class="dv">3</span>))</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>my_mask[my_pix] <span class="ot">=</span> <span class="dv">1</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">image</span>(<span class="fu">as.matrix.csr</span>(my_mask))</span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAS1BMVEUAAAAAADoAAGYAOpAAZrY6AAA6ADo6AGY6Ojo6kNtmAABmtrZmtv+QOgCQ2/+2ZgC2//++vr7bkDrb////tmb/25D//7b//9v///9LVPlkAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAKmklEQVR4nO3d62ISWRpAUdRkZpI2xkZyef8nHS4hXloSwz7VUrjWDxvt9Mdp3BanIBaLRwgWv3sBzJuASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEMDmjBmfhdAY0dx+8iIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRnGhAf39v7H0zkIBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgknkENNLY/48/noBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgkhMJaMJgBDQpAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkJxLQjzQwFwIiERCJgEgERCIgEgGRTBLQ/fXV+sfVYrF4//m4cQKai+kCWn74srn18ahxApqLyQJ6Smeb0dvHCWguJgvo7nIb0Or7J7HFs5cnCGguHIFIJgpoc4y5eNxvp98+TkBzMdVp/Lqhd5/WJ2IH+hHQufA6EImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASE40oB8I6GQJiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiI50YD+ns7Y/48/noBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgkhMJaMJg9DQpAZEI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" /><!-- --></p>
+<p>First we want to crop the mask such that the region of interest is
+centered for the pipeline and to square it to simplify our data
+processing computations. We highly recommend cropping the binary mask to
+square it.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>dim_square <span class="ot">=</span> <span class="dv">20</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>indices <span class="ot">&lt;-</span> <span class="fu">which</span>(my_mask <span class="sc">==</span> <span class="dv">1</span>, <span class="at">arr.ind =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># Get the center indices</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>center_row <span class="ot">&lt;-</span> <span class="fu">median</span>(indices[, <span class="dv">1</span>])</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>center_col <span class="ot">&lt;-</span> <span class="fu">median</span>(indices[, <span class="dv">2</span>])</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co"># Create the 1662 by 1662 matrix with all 0&#39;s</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>new_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> dim_square, <span class="at">ncol =</span> dim_square)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co"># Get the row and column shifts needed to center the shape</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>row_shift <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">nrow</span>(new_matrix) <span class="sc">/</span> <span class="dv">2</span>) <span class="sc">-</span> center_row</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>col_shift <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">ncol</span>(new_matrix) <span class="sc">/</span> <span class="dv">2</span>) <span class="sc">-</span> center_col</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co"># Shift the indices to center the shape in the new matrix</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>indices[, <span class="dv">1</span>] <span class="ot">&lt;-</span> indices[, <span class="dv">1</span>] <span class="sc">+</span> row_shift</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>indices[, <span class="dv">2</span>] <span class="ot">&lt;-</span> indices[, <span class="dv">2</span>] <span class="sc">+</span> col_shift</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co"># Replace the relevant values in the new matrix with the shape</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>new_matrix[indices] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="fu">image</span>(<span class="fu">as.matrix.csr</span>(new_matrix))</span></code></pre></div>
+<p><img src="data:image/png;base64,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01QPohHQkOpumupBNAIaUt1NUz2IRkDTqgM50fyDEtC06hJONP+gBDStuoQTzT8oAU2rLuFE8w9KQNOqSzjR/IMS0LTqEk40/6AENK26hBPNPygBTasu4UTzD0pA06pLONH8gxLQtOoSTjT/oAQ0rbqEE80/KAFNqy7hRPMPSkDTqks40fyDEtC06hJONP+gBDStuoQTzT8oAU2rLuFE8w9KQNOqSzjR/IMS0LTqEk40/6AENK26hBPNPygBTasu4UTzD0pA0670t3N+ApomoCMJaJqAjiSgaQI6koCmCehIApomoCMJaJqAjiSgaQI6koCmCehIApomoCMJaJqAjiSgaQI6koCmCehIApomoCMJaJqAjiSgaQI6koCmCehIApomoCMJaJqAjiSgaQI6koCG/MWl7CGgIQLqCWiIgHoCGiKgnoCGCKgnoCEC6gloiIB6AhoioJ6AhgioJ6AhAuoJaIiAegIaIqCegIYIqCegIQLqCWiIgHoCGiKgnoCGCKgnoCEC6gloiIB6AhoioJ6AiAiIyEUCern/sv7xabVaffxxht2xYJcL6PHTz82rr/nuWLCLBfSWzjajcHcs2MUCev68Dehpz5uYgG6EKxCRCwW0Xj+v7n69L6fD3bFgl7qNXzf04dv6RmxPPwK6FT4HIjJzQKvmLLujnCsQEQERueBd2I7PgW7bZa5Arw97vwh2yu5Yrgu9hb0+3J1zdyzWpdZAT6s9X0U9bXcslUU0EQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQkQsF9Pqw2vr44yy7Y7EuE9Dj6svuxdP7i2h3LNdFAnp9aNk8fvoZ744Fu0hAL/df318+7XkTE9CNcAUicqk10NslyBro1l3oLuzlfncXtuf6I6Cb4XMgIjMHtGrOsjvKXSigx3Ui22XQo7uw23ahRfSHb+tl0N0vAd28C97Gvz6sl9ACunEX/SDx+6efArpxl/0g8fudgG7chdZAb9m83O/7eryAbsTF7sJ2b2KvDwK6bT5IJCIgImUBcSOKAprJ/L/qgjldx0kKaKlHvJKTFNBSj3glJymgpR7xSk5SQEs94pWcpICWesQrOUkBLfWIV3KSAlrqEa/kJAW01CNeyUleZ0AshoCICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIyPUFtHvM3t18B3z+1/ZP4T6tVh++zXrI2c50+/z47XMPxk/y+gJ6/p+5fht3Xu63f4z7aT3Yp5kKejvkXGf6+rA+r8dNqSec5PUFtO8R1Zc63O4vdtg9meT7LBe+t0POdqbPnzdPPHj8+OOUk7y+gB5nfPfaPtB4+/vYhjzfIec+0w/fTjnJ6wvo+/++v2HPZBfQ9u1krmvC7jjznun3jz9OOcmrC+jlfvOQ6u8zFrQd6G5lMNciaHvIec908+z4U07y6gLamXMhVBXQf7286BHf19B/SUC7d+t5lL2Fbc1zpru/u+KveAvbmfNefu5F9K/fA5rjTN/+Iri/YhG9O8nZ38LmvI3/rdk5zvSfJxf+Dbfx2/ObfRE96weJ73dhM53p8+f3Y/wVHyT++r5areZbAbVrwOOMX8p4O+RMZ/q4eybZ5uzGT/IKA2JJBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQEdLyX+zn/SP6VENDxBDRBQMcT0AQB/cHj24Pin3ZPS10HtG1o/cPz53/fr//d8+fN81de7jc/+UvjEtB+jx++reP4su5nE8nd7wFtH+7+8cfmgXAv95ufzPbwoGUR0F6bdjZ2D357+vDtt4C+vD3Z6/nz1+2Gcz72c0kEtNd7Ert/bkP5j4C+vv2H3b//exdIAtrr/fmou4B29QioJ6C9XIGOIaC9ptdAu+WOgN4JaL/NjdXrw91/3oW9Pnz6+fqwElAjoD/478+Btn+L4L+9hf1DQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBETk/wHDFdVXGN096wAAAABJRU5ErkJggg==" /><!-- --></p>
+<p>The pixels themselves will represent the vertices of the complex. To
+add some noise and randomness to the input shapes, we allow for the
+points to be plotted anywhere within the pixel as projected onto a <span class="math inline">\([0,1] \times \[0,1\]\)</span> square. We store
+these vertex locations in a data frame containing the vertex label
+(labeled numerically if none given), the original matrix row, original
+matrix column, the x coordinate, and y coordinate.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Adds some randomness to pixel points so that not just straight grid on xy plane (helper function)</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>jitter_pixel <span class="ot">&lt;-</span> <span class="cf">function</span>(x,y, dim_square){</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  pt_center <span class="ot">=</span> <span class="fu">c</span>((y<span class="dv">-1</span>)<span class="sc">/</span>dim_square<span class="sc">+</span><span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span>dim_square), (dim_square<span class="sc">-</span>x)<span class="sc">/</span>dim_square<span class="sc">+</span><span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span>dim_square))</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  jitter <span class="ot">=</span> <span class="fu">runif</span>(<span class="dv">2</span>, <span class="at">min=</span><span class="sc">-</span><span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span>dim_square), <span class="at">max=</span><span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span>dim_square))</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="fu">return</span>(pt_center<span class="sc">+</span>jitter)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>}</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co"># Finds all possible vertices of the matrix (all black tiles)</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>find_image_vert <span class="ot">&lt;-</span> <span class="cf">function</span>(new_matrix, dim_square){</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="co"># create table with corresponding row/col# and xy coordinates</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  my_vertex_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">matrix</span>(<span class="at">ncol=</span><span class="dv">5</span>, <span class="at">nrow=</span><span class="dv">0</span>))</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="fu">colnames</span>(my_vertex_df) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;label&quot;</span>, <span class="st">&quot;mrow&quot;</span>, <span class="st">&quot;mcol&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="st">&quot;y&quot;</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  count<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="cf">for</span>(x <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>dim_square){</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    <span class="cf">for</span>(y <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>dim_square){</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>      <span class="cf">if</span>(new_matrix[x,y]<span class="sc">==</span><span class="dv">1</span>){ <span class="co"># black tile is represented by 1</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>        my_vertex_df[count,] <span class="ot">&lt;-</span> <span class="fu">c</span>(count, x, y, <span class="fu">jitter_pixel</span>(x,y, dim_square))</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>        count<span class="ot">=</span>count<span class="sc">+</span><span class="dv">1</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>      }</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>    }</span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>  }</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>  <span class="fu">return</span>(my_vertex_df)</span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>}</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>my_vert <span class="ot">&lt;-</span> <span class="fu">find_image_vert</span>(<span class="at">new_matrix=</span>new_matrix, <span class="at">dim_square=</span>dim_square)</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="fu">head</span>(my_vert)</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt;   label mrow mcol         x         y</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; 1     1    5    9 0.4393740 0.7990943</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; 2     2    6    9 0.4256051 0.7066301</span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; 3     3    6   10 0.4833670 0.7033042</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="co">#&gt; 4     4    6   11 0.5104561 0.7380104</span></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="co">#&gt; 5     5    6   12 0.5529936 0.7088724</span></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="co">#&gt; 6     6    6   13 0.6119817 0.7050589</span></span></code></pre></div>
+<p>Next, we need to find the edges. We do this in a systemic order such
+that no edges overlap each other. To make an edge, we use the following
+step by step logic for each pixel: * Check the right, down, and
+diagonally down pixels relative to the current pixel. Any which have a
+point will have an edge with the current pixel. * Check if there is no
+point in the pixel above and there is a point in the pixel upward
+diagonal right. If both conditions are true, current pixel shares an
+edge with the upward diagonal right point. * Check if there is no point
+in pixel below, and there is a point in the pixel downward diagonal
+left. If both conditions are true, current pixel shares a edge with the
+downard diagonal left point.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Finds all possible edges of matrix</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co"># Conditions to make edges:</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co"># 1. Check the right, down, and diag right down.</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co"># 2. check if 0 above, 1 diag up right, 1 right. If true, edge with diag up right.</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># 3. Check if 0 below, 1 diag down left, 1 diag down left. If true, edge with diag down left.</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>find_image_edge <span class="ot">&lt;-</span> <span class="cf">function</span>(image_vert) {</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="co"># image_vert is the data frame returned from function above</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  n <span class="ot">=</span> <span class="fu">nrow</span>(image_vert)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  edge_list <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="fu">matrix</span>(<span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">nrow =</span> <span class="dv">0</span>))</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>n) {</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>    my_row <span class="ot">=</span> image_vert[i, <span class="dv">2</span>]</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>    my_col <span class="ot">=</span> image_vert[i, <span class="dv">3</span>]</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>    my_x <span class="ot">=</span> image_vert[i, <span class="dv">4</span>]</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>    my_y <span class="ot">=</span> image_vert[i, <span class="dv">5</span>]</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>    focus <span class="ot">=</span> image_vert[<span class="dv">1</span><span class="sc">:</span>(i<span class="dv">-1</span>), ]</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>    </span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>    <span class="co"># Find edges to the right/left, up/down, and upper right/downward left diagonals</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>    edges_row <span class="ot">=</span> focus[<span class="fu">which</span>(focus<span class="sc">$</span>mrow <span class="sc">==</span> my_row <span class="sc">&amp;</span> focus<span class="sc">$</span>mcol <span class="sc">%in%</span> <span class="fu">c</span>(my_col<span class="dv">-1</span>, my_col<span class="sc">+</span><span class="dv">1</span>)),]</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>    edges_col <span class="ot">=</span> focus[<span class="fu">which</span>(focus<span class="sc">$</span>mcol <span class="sc">==</span> my_col <span class="sc">&amp;</span> focus<span class="sc">$</span>mrow <span class="sc">%in%</span> <span class="fu">c</span>(my_row<span class="dv">-1</span>, my_row<span class="sc">+</span><span class="dv">1</span>)),]</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>    edges_diag1 <span class="ot">=</span> focus[<span class="fu">which</span>(focus<span class="sc">$</span>mcol <span class="sc">==</span> my_col<span class="sc">+</span><span class="dv">1</span> <span class="sc">&amp;</span> focus<span class="sc">$</span>mrow <span class="sc">%in%</span> <span class="fu">c</span>(my_row<span class="dv">-1</span>, my_row<span class="sc">+</span><span class="dv">1</span>)),]</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>    edges_diag2 <span class="ot">=</span> focus[<span class="fu">which</span>(focus<span class="sc">$</span>mcol <span class="sc">==</span> my_col<span class="dv">-1</span> <span class="sc">&amp;</span> focus<span class="sc">$</span>mrow <span class="sc">%in%</span> <span class="fu">c</span>(my_row<span class="sc">+</span><span class="dv">1</span>)),]</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>    edges_diag3 <span class="ot">=</span> <span class="cn">NULL</span></span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>    </span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>    <span class="co"># includes upper left/downward right diagonals if upper right/downward left diagonals don&#39;t exist</span></span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>    <span class="cf">if</span> ((<span class="fu">nrow</span>(focus[<span class="fu">which</span>(focus<span class="sc">$</span>mcol <span class="sc">==</span> my_col <span class="sc">&amp;</span> focus<span class="sc">$</span>mrow <span class="sc">%in%</span> <span class="fu">c</span>(my_row<span class="dv">-1</span>)),]) <span class="sc">==</span> <span class="dv">0</span> <span class="sc">||</span></span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>        <span class="fu">nrow</span>(focus[<span class="fu">which</span>(focus<span class="sc">$</span>mrow <span class="sc">==</span> my_row <span class="sc">&amp;</span> focus<span class="sc">$</span>mcol <span class="sc">%in%</span> <span class="fu">c</span>(my_col<span class="dv">-1</span>)),]) <span class="sc">==</span> <span class="dv">0</span>) <span class="sc">&amp;&amp;</span></span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>        <span class="fu">nrow</span>(focus[<span class="fu">which</span>(focus<span class="sc">$</span>mrow <span class="sc">==</span> my_row<span class="dv">-1</span> <span class="sc">&amp;</span> focus<span class="sc">$</span>mcol <span class="sc">%in%</span> <span class="fu">c</span>(my_col<span class="dv">-1</span>)),]) <span class="sc">!=</span> <span class="dv">0</span>){</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>      edges_diag3 <span class="ot">=</span> focus[<span class="fu">which</span>(focus<span class="sc">$</span>mcol <span class="sc">==</span> my_col<span class="dv">-1</span> <span class="sc">&amp;</span> focus<span class="sc">$</span>mrow <span class="sc">%in%</span> <span class="fu">c</span>(my_row<span class="dv">-1</span>)),]</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a>    }</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>    </span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>    edges <span class="ot">=</span> <span class="fu">rbind</span>(edges_row, edges_col, edges_diag1, edges_diag2, edges_diag3)</span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">nrow</span>(edges) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a>      temp <span class="ot">=</span> <span class="fu">cbind</span>(i, edges[,<span class="dv">1</span>])</span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a>      <span class="cf">for</span>(m <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(temp)[<span class="dv">1</span>]){</span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a>        temp[m,] <span class="ot">=</span> <span class="fu">sort</span>(temp[m,])</span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1"></a>      }</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1"></a>      edge_list <span class="ot">=</span> <span class="fu">rbind</span>(edge_list, temp)</span>
+<span id="cb6-38"><a href="#cb6-38" tabindex="-1"></a>    }</span>
+<span id="cb6-39"><a href="#cb6-39" tabindex="-1"></a>  }</span>
+<span id="cb6-40"><a href="#cb6-40" tabindex="-1"></a>  <span class="fu">colnames</span>(edge_list) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;ed1&quot;</span>, <span class="st">&quot;ed2&quot;</span>)</span>
+<span id="cb6-41"><a href="#cb6-41" tabindex="-1"></a>  <span class="fu">return</span>(edge_list)</span>
+<span id="cb6-42"><a href="#cb6-42" tabindex="-1"></a>}</span>
+<span id="cb6-43"><a href="#cb6-43" tabindex="-1"></a></span>
+<span id="cb6-44"><a href="#cb6-44" tabindex="-1"></a>my_edge <span class="ot">=</span> <span class="fu">find_image_edge</span>(my_vert)</span>
+<span id="cb6-45"><a href="#cb6-45" tabindex="-1"></a><span class="fu">head</span>(my_edge)</span>
+<span id="cb6-46"><a href="#cb6-46" tabindex="-1"></a><span class="co">#&gt;   ed1 ed2</span></span>
+<span id="cb6-47"><a href="#cb6-47" tabindex="-1"></a><span class="co">#&gt; 1   1   2</span></span>
+<span id="cb6-48"><a href="#cb6-48" tabindex="-1"></a><span class="co">#&gt; 2   2   3</span></span>
+<span id="cb6-49"><a href="#cb6-49" tabindex="-1"></a><span class="co">#&gt; 3   1   3</span></span>
+<span id="cb6-50"><a href="#cb6-50" tabindex="-1"></a><span class="co">#&gt; 4   3   4</span></span>
+<span id="cb6-51"><a href="#cb6-51" tabindex="-1"></a><span class="co">#&gt; 5   4   5</span></span>
+<span id="cb6-52"><a href="#cb6-52" tabindex="-1"></a><span class="co">#&gt; 6   5   6</span></span></code></pre></div>
+<p>Finally, we find the faces. A face is formed where three vertices
+share all possible pairwise edges - in other words, where three edges
+form a triangle, we add a face.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Finds all possible faces of matrix</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>find_image_face <span class="ot">&lt;-</span> <span class="cf">function</span>(edge_list) {</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="co"># edge_list is the list returned from function above</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  n <span class="ot">=</span> <span class="fu">max</span>(edge_list)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  face_list <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="fu">matrix</span>(<span class="at">ncol =</span> <span class="dv">3</span>, <span class="at">nrow =</span> <span class="dv">0</span>))</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    edges <span class="ot">=</span> edge_list[edge_list[,<span class="dv">1</span>] <span class="sc">==</span> i, <span class="dv">2</span>]</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>    edges <span class="ot">=</span> <span class="fu">sort</span>(edges)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>    n_edges <span class="ot">=</span> <span class="fu">length</span>(edges)</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    <span class="cf">if</span> (n_edges <span class="sc">&gt;=</span> <span class="dv">2</span>) {</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>      <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>(n_edges<span class="dv">-1</span>)) {</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>        <span class="cf">for</span> (k <span class="cf">in</span> (j<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span>n_edges) {</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>          <span class="cf">if</span> (<span class="fu">length</span>(<span class="fu">which</span>(edge_list<span class="sc">$</span>ed1<span class="sc">==</span>edges[j] <span class="sc">&amp;</span> edge_list<span class="sc">$</span>ed2<span class="sc">==</span>edges[k]))<span class="sc">==</span><span class="dv">1</span>){</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>            face_list <span class="ot">=</span> <span class="fu">rbind</span>(face_list, <span class="fu">sort</span>(<span class="fu">cbind</span>(i, edges[j], edges[k])))</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>          }</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>        }</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>      }</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>    }</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>  }</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>  <span class="fu">colnames</span>(face_list) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;f1&quot;</span>, <span class="st">&quot;f2&quot;</span>, <span class="st">&quot;f3&quot;</span>)</span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>  <span class="fu">return</span>(face_list)</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>}</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>my_face <span class="ot">=</span> <span class="fu">find_image_face</span>(my_edge)</span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="fu">head</span>(my_face)</span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt;   f1 f2 f3</span></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; 1  1  2  3</span></span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co">#&gt; 2  2  3  9</span></span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co">#&gt; 3  2  8  9</span></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt; 4  3  4 10</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="co">#&gt; 5  3  9 10</span></span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co">#&gt; 6  4  5 11</span></span></code></pre></div>
+<p>We take all of this information and put it together as one simplicial
+complex object, and plot the result:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>n<span class="ot">=</span><span class="fu">dim</span>(my_vert)[<span class="dv">1</span>]</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>my_complex <span class="ot">=</span> <span class="fu">append</span>(<span class="fu">as.list</span>(<span class="dv">1</span><span class="sc">:</span>n), <span class="fu">split</span>(<span class="fu">as.matrix</span>(my_edge), <span class="fu">seq</span>(<span class="fu">nrow</span>(my_edge))))</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>my_complex <span class="ot">=</span> <span class="fu">append</span>(my_complex, <span class="fu">split</span>(<span class="fu">as.matrix</span>(my_face), <span class="fu">seq</span>(<span class="fu">nrow</span>(my_face))))</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>total_complex <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="st">&quot;Vertices&quot;</span><span class="ot">=</span>my_vert[,<span class="dv">4</span><span class="sc">:</span><span class="dv">5</span>], <span class="st">&quot;cmplx&quot;</span><span class="ot">=</span>my_complex)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>plot_2D_complex <span class="ot">&lt;-</span> <span class="cf">function</span>(points, complex, <span class="at">color1=</span><span class="st">&quot;gray&quot;</span>, <span class="at">color2=</span><span class="st">&quot;black&quot;</span>){</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  edges<span class="ot">=</span><span class="fu">extract_complex_edges</span>(complex)</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  tri_keep <span class="ot">=</span><span class="fu">extract_complex_faces</span>(complex)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  edge_face <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow=</span><span class="dv">0</span>, <span class="at">ncol=</span><span class="dv">2</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(tri_keep)[<span class="dv">1</span>]){</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>    face_v <span class="ot">=</span> <span class="fu">sort</span>(<span class="fu">as.matrix</span>(tri_keep[j,]))</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>    edge_face <span class="ot">=</span> <span class="fu">rbind</span>(edge_face, <span class="fu">c</span>(face_v[<span class="dv">1</span>], face_v[<span class="dv">2</span>]),</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>                      <span class="fu">c</span>(face_v[<span class="dv">2</span>], face_v[<span class="dv">3</span>]),</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>                      <span class="fu">c</span>(face_v[<span class="dv">1</span>], face_v[<span class="dv">3</span>]))</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  }</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  edge_face <span class="ot">=</span> <span class="fu">data.frame</span>(edge_face)</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>  <span class="fu">colnames</span>(edge_face)<span class="ot">=</span><span class="fu">c</span>(<span class="st">&quot;ed1&quot;</span>, <span class="st">&quot;ed2&quot;</span>)</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>  int_edge <span class="ot">=</span> edge_face[<span class="fu">which</span>(<span class="fu">duplicated</span>(edge_face)),]</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>  int_edge <span class="ot">=</span> <span class="fu">unique</span>(int_edge)</span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  bd_edge <span class="ot">=</span> <span class="fu">setdiff</span>(edges, int_edge)</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>  edges <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="fu">cbind</span>(<span class="st">&quot;ed1&quot;</span><span class="ot">=</span> bd_edge<span class="sc">$</span>ed1, <span class="st">&quot;ed2&quot;</span><span class="ot">=</span>bd_edge<span class="sc">$</span>ed2, <span class="st">&quot;x1&quot;</span> <span class="ot">=</span> points[bd_edge<span class="sc">$</span>ed1,<span class="dv">1</span>], <span class="st">&quot;y1&quot;</span><span class="ot">=</span>points[bd_edge<span class="sc">$</span>ed1,<span class="dv">2</span>],</span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a>                           <span class="st">&quot;x2&quot;</span> <span class="ot">=</span> points[bd_edge<span class="sc">$</span>ed2,<span class="dv">1</span>], <span class="st">&quot;y2&quot;</span><span class="ot">=</span>points[bd_edge<span class="sc">$</span>ed2,<span class="dv">2</span>]))</span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a>  dim_tri <span class="ot">=</span> <span class="fu">dim</span>(tri_keep)[<span class="dv">1</span>]</span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a>  tri_keep <span class="ot">=</span> <span class="fu">as.vector</span>(<span class="fu">t</span>(tri_keep))</span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a>  triangles <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="st">&quot;id&quot;</span><span class="ot">=</span><span class="fu">sort</span>(<span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>dim_tri, <span class="dv">3</span>)), <span class="st">&quot;x&quot;</span><span class="ot">=</span>points[tri_keep, <span class="dv">1</span>], <span class="st">&quot;y&quot;</span><span class="ot">=</span>points[tri_keep,<span class="dv">2</span>])</span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a>  the_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="fu">data.frame</span>(points), <span class="fu">aes</span>(<span class="at">x=</span>x, <span class="at">y=</span>y)) <span class="sc">+</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a>    <span class="fu">geom_polygon</span>(<span class="at">data=</span>triangles, <span class="fu">aes</span>(<span class="at">x=</span>x, <span class="at">y=</span>y, <span class="at">group=</span>id), <span class="at">fill=</span>color1) <span class="sc">+</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a>    <span class="fu">geom_segment</span>(<span class="at">data=</span>edges, <span class="fu">aes</span>(<span class="at">x=</span>x1, <span class="at">y=</span>y1, <span class="at">xend=</span>x2, <span class="at">yend=</span>y2), <span class="at">color=</span>color2, <span class="at">linewidth=</span><span class="dv">1</span>)<span class="sc">+</span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a>    <span class="co">#theme_classic()+</span></span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a>    <span class="fu">theme_void</span>()<span class="sc">+</span></span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_rect</span>(<span class="at">fill=</span><span class="st">&quot;white&quot;</span>))<span class="sc">+</span></span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a>    <span class="fu">xlab</span>(<span class="st">&quot;&quot;</span>)<span class="sc">+</span></span>
+<span id="cb8-33"><a href="#cb8-33" tabindex="-1"></a>    <span class="fu">ylab</span>(<span class="st">&quot;&quot;</span>)<span class="sc">+</span></span>
+<span id="cb8-34"><a href="#cb8-34" tabindex="-1"></a>    <span class="fu">xlim</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>))<span class="sc">+</span></span>
+<span id="cb8-35"><a href="#cb8-35" tabindex="-1"></a>    <span class="fu">ylim</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>))<span class="sc">+</span></span>
+<span id="cb8-36"><a href="#cb8-36" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x=</span><span class="fu">element_blank</span>(),</span>
+<span id="cb8-37"><a href="#cb8-37" tabindex="-1"></a>          <span class="at">axis.ticks.x=</span><span class="fu">element_blank</span>(),</span>
+<span id="cb8-38"><a href="#cb8-38" tabindex="-1"></a>          <span class="at">axis.text.y=</span><span class="fu">element_blank</span>(),</span>
+<span id="cb8-39"><a href="#cb8-39" tabindex="-1"></a>          <span class="at">axis.ticks.y=</span><span class="fu">element_blank</span>(), <span class="at">axis.line=</span><span class="fu">element_blank</span>())</span>
+<span id="cb8-40"><a href="#cb8-40" tabindex="-1"></a>  <span class="fu">return</span>(the_plot)</span>
+<span id="cb8-41"><a href="#cb8-41" tabindex="-1"></a>}</span>
+<span id="cb8-42"><a href="#cb8-42" tabindex="-1"></a></span>
+<span id="cb8-43"><a href="#cb8-43" tabindex="-1"></a><span class="fu">plot_2D_complex</span>(total_complex<span class="sc">$</span>Vertices, total_complex<span class="sc">$</span>cmplx)</span></code></pre></div>
+<p><img src="data:image/png;base64,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H+FyiryNwuf4HCP9fIzXOXpd749jkJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQbIDiP8GZ1bkpfEQUAAAAAElFTkSuQmCC" /><!-- --></p>
+</div>
+<div id="obtaining-binary-mask-from-the-complex" class="section level2">
+<h2>Obtaining binary mask from the complex</h2>
+<p>To reverse, we plot the simplicial complex with black faces and black
+edges. We save the image as a png specifying the dimensions in
+pixels.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>bw_plot <span class="ot">=</span> <span class="fu">plot_2D_complex</span>(total_complex<span class="sc">$</span>Vertices, total_complex<span class="sc">$</span>cmplx, <span class="at">color1=</span><span class="st">&quot;black&quot;</span>, <span class="at">color2=</span><span class="st">&quot;black&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>directory <span class="ot">=</span> <span class="fu">getwd</span>()  <span class="co">#Replace with your own string if you would like to specify the directory</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>my_file <span class="ot">=</span> <span class="fu">paste0</span>(directory, <span class="st">&quot;/test_bin.png&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">file=</span>my_file, <span class="at">plot=</span>bw_plot, <span class="at">width=</span><span class="dv">1</span>, <span class="at">height=</span><span class="dv">1</span>, <span class="at">units=</span><span class="st">&quot;in&quot;</span>, <span class="at">dpi =</span> dim_square)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>bw_plot</span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAABlBMVEUAAAD///+l2Z/dAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAKlElEQVR4nO3d23LcNhREUer/fzrl2JZH0lxINAkMcNZ6ZkZAexflVGJ52yDyAe0ERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREpHpA1e8fqz7gVn2AVPX9BBSqvt+moEz1+QQUqj7fpqBM9fUEFCq+3iagUPH1NgWFio8noFTx8TYFhYpvJ6BU8e02BYWKTyegVO3ptk1BodrLCShWe7lNQanawwkoVnu4TUGp2rsJKFZ7NwHFSu+2bQpKlZ5NQLnSs20KipVeTUC50qt9D6jyFq1KjyagXOnRfgRUeYxGlTf72U/hMVpV3uxOQIXXaFR5MgGdoPJkAjpB5cnuBXR3DmE9VnmaIwFV3umpysPcDejOHr67PVF4l/v9/NzDb5CeKbzKg4C+D+K32E8VHqUhoMJrPVJ4kkcBbU+fGnTYt1V4kV0BvX5DFVd4j4cBbS+eyb9s9glvZanLHNMcULDZei+xpS5zyON+/m2yI7Gmr3jaJcZb6jKH7AhoT2NNX+7kq4y01GUOeV3HsycO7hbW98aWuswhL+t43s+BDML43ttSlzkkD2jXdFF6E1jqMoe8auN1P6+zSMqbxFKX2W1HDMf7OWD0/U+01GV2ubSMnUZvcKKlLvPK6G4+jR7iREtd5pnRzXwxeowTLXWZB0bn8tPoRU601GUeGJ3LT6MXOdFSl3lgdC4/jV7kREtd5pHRvfwwepATLXWZh0YH893oPU601GUeG13MV6PXONNat3lsdDNfjB7jTGvd5onR0fw1eoezrXejR0aXs6059Zq3uks8V1j3Zj/J5wIr3+0H+Zxv7dt9J5/TrX6/b9RztgJX/KKtAfk8VOKSt1ojkM99Ra55o70C+dxR5qL/JB3I57tCV/2UvUfk80Wpy/6V9LPjH+98m7GKXfePqJ8XH9DxGu+g3IV/C/t5+BGdjv9GKt75l7ifex/S4dxvp+atP8760QkfR59fTtV7n/hb4cr5VA7ozJ8fVVjppfSTKz6VflLlt9JPpvxY+smUX0s/mfJz6SdTfi8BZcrvJaBM+b0ElCm/l34y5QcTUKb8YALKlB9MQJnygwkoU34w/WTKLyagTPnFBJQpv5iAMuUXE1Cm/GL6yZSfTECZ8pMJKFN+MgFlTCagiMn0E7GZgCI2E1DEZgKK2ExAEZvpJ2I0AUWMJqCI0QQUMZqAIkbTT8RqAopYTUARqwkoYjUBRaymn4jZBBQxm4AiZhNQxGwfAkqYTUARs/0raPQ5pmS2j8+CRh9jSmb78ApKWO0XATWz2i8Cama1/wmoldV+U1Ajo/0moEZG+0NAbYz2h1dQG5v9JaAmNvskoBY2++QV1MJk/wiogcluCOg4k90Q0HEmu6Wgwyx2S0CHWewLcxxlsS+8go4y2C3/In+YwW7472HH2esf/19iA3t98ufDWpjrL3/EuYm5/tg2BbWw1m/bpqAmxvrfJqBGxvpl+270geZhq487/VhlN1Pd7ccqe5nqbj9m2ctS9/spP8te5Zd60E/5XfYqP9TDgKoPs1P1nR73U3yYvYrv9KSf4svsVXump/10mmbyUuc+fehFPz2mmf5VN/fpM6/66bDN/N8r5z595HU/V2/T9VvlReY+fWJHPxeP0/Nb5WXmPn1gVz9XrtPxTXelqQ8f2NnPdev0e9Fda+rDt9vbz1XzdHvPXW7qwzfb3881+3R7z11v6sO3OtLPFfv0es/1MPPZWx3q5/yBOlXaycxnb3Swn7MH6hJpPzOfvc3Rfs5dqE+kHc189ibH+zlzoh6N9jXz2Vu09HPar3WXRjub+Ogt8n6CX/izPuetTHz0FqcHdJbRwzSb+OgNRmfy2Ohlmk189ONGV/LM6G1azXvy40Y38tTocVrNe/LDRify3Oh1Ws178qNGF/LC6HlazXvyo0YX8sLoeVrNe/KDRgfy0uiBGk178ING5/Ha6IUaTXvwY0bXscPoiRpNe/BDRsexx+iNGk178CNGt7HH6I1azXvy/UZmceDROU178AOu62NHE0eendG8J9/tykT2NHHk2flMfPSdLq5kRxNHnp3OzGff5fJOdiRx6OHJTH34HTqksiOJQw/PZe7Tv9Qllh1JHHp4KpMf/4UrWtjx4fnT85j9/M9d2c9ZZzntC4wx/QWeead+lvsjqX8scIWH3qufRf9SoBXu8MC79XPnSGd//gBLXOKuN+zn+6HO//z+1rjFHW/ZzzI/GfGfRa7x03v2c3uuaz6/t1Xu8d279rPGD4e+scxFvnrffv4e7sLP72qdm9x6636m//tVvljoKjfeu5+lrLmVfrpZcyz9dLPmWvrpZs259NPNonvpp5dFB9NPL4supp9eVp1MP52supl+Oll1NAF1supo+ulk2dX008eys+mnj2V3E1Af6+6mny4WHk4/PSy9nH6ut/Z0Arrc6tPp52LLb6efa60/nn4uVWE9AV2oxHr6uU6R+fRzlSr7CegiZfbTzzUKDaifK1RaUD8XqDWhgE5XbEL9nK3chvo5V70R9XOqgisK6EwlV9TPeWrOqJ/TVN2x6r1PZ0giAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICIbJP4Db9/bYQLYtKEAAAAASUVORK5CYII=" /><!-- --></p>
+<p>We then load this png image using the <code>image_import</code>
+function from the <code>EBImage</code> library and the
+<code>image_to_mat</code> function from the <code>pliman</code> library
+and manually convert it to a binary mask. We correct for the black
+border that ensures centering of the image when we saved it. As stated
+above, we do not evaluate the code here. However, the converted binary
+mask is displayed below.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># load the png</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>img <span class="ot">&lt;-</span> <span class="fu">image_import</span>(my_file)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co"># Convert to binmap</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>img_bin <span class="ot">&lt;-</span> <span class="fu">image_to_mat</span>(img)</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>img_binR <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">matrix</span>(img_bin<span class="sc">$</span>B1, <span class="at">nrow=</span><span class="dv">20</span>,<span class="at">ncol=</span><span class="dv">20</span>))</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>my_ind <span class="ot">=</span> <span class="fu">which</span>(img_binR[<span class="dv">2</span><span class="sc">:</span>(dim_square<span class="dv">-1</span>), <span class="dv">2</span><span class="sc">:</span>(dim_square<span class="dv">-1</span>)] <span class="sc">&lt;</span> <span class="fl">0.7</span>, <span class="at">arr.ind=</span><span class="cn">TRUE</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>img_bin <span class="ot">=</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow=</span>dim_square, <span class="at">ncol=</span>dim_square)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>img_bin[my_ind] <span class="ot">=</span> <span class="dv">1</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="fu">image</span>(<span class="fu">as.matrix.csr</span>(img_bin))</span></code></pre></div>
+<div class="float">
+<img src="data:image/png;base64,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" alt="New Binary Mask" />
+<div class="figcaption">New Binary Mask</div>
+</div>
+<p>While not a perfect rendition, the major characteristics are
+preserved and most importantly, the shape bears resemblence to the
+simplicial complex. Note that for the neutrophils, we used a threshold
+of 1 instead of 0.7; the change in threshold has to do with the detailed
+pixelation and may require trial and error on the part of the user.
+Generally speaking, the more detailed the pixelation (e.g., the larger
+<code>dim_square</code>), then the higher the threshold for accepting a
+pixel in the binary mask. The basic tutorial shows the general process
+for going back and forth. Performance improves with more detailed binary
+masks.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
