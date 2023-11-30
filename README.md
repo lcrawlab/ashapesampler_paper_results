@@ -1,5 +1,5 @@
 # Alpha Shape Sampler Paper Results
-Code and scripts to reproduce analyses and result provided in the alpha shape sampler paper beyond what is given in the R package.
+Code to reproduce analyses and results provided in the alpha shape sampler paper beyond what is given in the R package.
 
 ## Directory Contents
 The list of directories and their corresponding purpose in this repository include:
