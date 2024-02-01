@@ -1,5 +1,5 @@
 # $\alpha$-Shape Sampler Paper Results
-Code to reproduce analyses and results provided in the $\alpha$-shape sampler paper beyond what is given in the [R package](https://github.com/lcrawlab/ashapesampler).
+Code to reproduce analyses and results provided in the $\alpha$-shape sampler paper beyond what is given in the [R package](https://cran.r-project.org/package=ashapesampler).
 
 ## Directory Contents
 The list of directories and their corresponding purpose in this repository include:
